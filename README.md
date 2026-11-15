@@ -7,7 +7,7 @@ Room settings also let users choose a wall colour with the colour picker, toggle
 
 Tasks:
 - Generating the virtual room
-- getting the furniture data from the links
+- Getting the furniture data from the links
 - Handling of the virtual room and interactions
 
 ## Run the app and configure extraction
@@ -18,7 +18,8 @@ Use Node.js 20.6 or newer. For metadata/spec parsing without an LLM, run:
 node server.js
 ```
 
-Open `http://127.0.0.1:3000`. The room starts empty; paste IKEA product URLs one per line and select **Extract details**. The server fetches IKEA product pages directly using standard HTTP requests and only follows redirects to IKEA domains. It does not attempt to bypass access restrictions; if IKEA returns an error such as HTTP 403, use a permitted access method or check the retailer's terms.
+Open `http://127.0.0.1:3000`. The room starts empty; paste IKEA product URLs one per line and select **Extract details**. The server fetches IKEA product pages directly using standard HTTP requests and only follows redirects to IKEA domains. It does not attempt to bypass access restrictions; if IKEA returns an error such as HTTP 403, use a permitted access method or check the retailer's terms. 
+IF ASKS FOR USER + PASSWORD; USER = ANYTHING, PASSWORD = 'Durhack2026'
 
 ## Use Room For Improvement from other devices
 
