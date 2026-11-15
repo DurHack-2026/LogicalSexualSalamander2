@@ -1,0 +1,5 @@
+/.env
+/.env.*
+!/.env.example
+/generated_trellis_models/
+/trellis_api_models/

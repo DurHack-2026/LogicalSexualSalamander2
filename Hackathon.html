@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Furniture Room Planner</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f5f5f5;
+}
+
+.toolbar {
+    background: #333;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.toolbar input {
+    flex: 1;
+    padding: 8px;
+}
+
+.toolbar button {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+#canvas {
+    width: 100%;
+    height: calc(100vh - 60px);
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(#e0e0e0 1px, transparent 1px),
+      linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+    background-size: 25px 25px;
+}
+
+.furniture {
+    position: absolute;
+    width: 150px;
+    cursor: move;
+    user-select: none;
+    border: 2px solid transparent;
+}
+
+.furniture.selected {
+    border: 2px solid #0078d7;
+}
+
+.resize-handle {
+    width: 12px;
+    height: 12px;
+    background: #0078d7;
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    cursor: nwse-resize;
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+    <input
+        type="text"
+        id="imageUrl"
+        placeholder="Paste PNG image URL">
+    <button onclick="addFurniture()">Add Furniture</button>
+    <button onclick="deleteSelected()">Delete Selected</button>
+</div>
+
+<div id="canvas"></div>
+
+<script>
+const canvas = document.getElementById("canvas");
+let selectedItem = null;
+
+function addFurniture() {
+    const url = document.getElementById("imageUrl").value;
+
+    if (!url) {
+        alert("Enter PNG URL");
+        return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "furniture";
+    wrapper.style.left = "100px";
+    wrapper.style.top = "100px";
+
+    const img = document.createElement("img");
+    img.src = url;
+    img.style.width = "100%";
+    img.draggable = false;
+
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "resize-handle";
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(resizeHandle);
+    canvas.appendChild(wrapper);
+
+    enableDragging(wrapper);
+    enableResizing(wrapper, resizeHandle);
+
+    wrapper.addEventListener("click", (e) => {
+        e.stopPropagation();
+
+        document.querySelectorAll(".furniture")
+            .forEach(el => el.classList.remove("selected"));
+
+        wrapper.classList.add("selected");
+        selectedItem = wrapper;
+    });
+}
+
+canvas.addEventListener("click", () => {
+    document.querySelectorAll(".furniture")
+        .forEach(el => el.classList.remove("selected"));
+    selectedItem = null;
+});
+
+function deleteSelected() {
+    if (selectedItem) {
+        selectedItem.remove();
+        selectedItem = null;
+    }
+}
+
+function enableDragging(element) {
+    let dragging = false;
+    let offsetX, offsetY;
+
+    element.addEventListener("mousedown", (e) => {
+        if (e.target.classList.contains("resize-handle")) return;
+
+        dragging = true;
+        offsetX = e.clientX - element.offsetLeft;
+        offsetY = e.clientY - element.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+
+        element.style.left =
+            e.clientX - offsetX + "px";
+
+        element.style.top =
+            e.clientY - offsetY + "px";
+    });
+
+    document.addEventListener("mouseup", () => {
+        dragging = false;
+    });
+}
+
+function enableResizing(element, handle) {
+    let resizing = false;
+    let startWidth;
+    let startX;
+
+    handle.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        resizing = true;
+        startWidth = element.offsetWidth;
+        startX = e.clientX;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!resizing) return;
+
+        const newWidth =
+            startWidth + (e.clientX - startX);
+
+        if (newWidth > 50) {
+            element.style.width =
+                newWidth + "px";
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+        resizing = false;
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design a room · Room For Improvement</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="page-tabs" aria-label="Room For Improvement pages">
+    <a class="page-tab" id="backToRoom" href="Roomfit.html">Arrange furniture</a>
+    <a class="page-tab" href="floorplan.html" aria-current="page">Design room</a>
+  </nav>
+
+  <header>
+    <h1>Design your room</h1>
+    <p>Draw the room by moving its corners. Add corners for any outline, then click a wall to place a door or window.</p>
+  </header>
+
+  <main class="app">
+    <div class="rail">
+      <section class="panel" aria-labelledby="h-room-outline">
+        <h2 id="h-room-outline">Room outline</h2>
+        <div>
+          <span class="lbl">Start with a shape</span>
+          <div class="seg" role="radiogroup" aria-label="Room shape">
+            <input type="radio" name="roomShape" id="shapeRect" value="rect"><label for="shapeRect">Rectangle</label>
+            <input type="radio" name="roomShape" id="shapeL" value="L"><label for="shapeL">L-shape</label>
+            <input type="radio" name="roomShape" id="shapeBay" value="bay"><label for="shapeBay">Bay</label>
+            <input type="radio" name="roomShape" id="shapeCustom" value="custom" checked><label for="shapeCustom">Custom</label>
+          </div>
+        </div>
+        <p class="hint">Choose a preset or drag corners to make a custom outline.</p>
+        <div class="btns">
+          <button class="btn" id="addCorner" type="button">Add corner</button>
+          <button class="btn danger" id="removeCorner" type="button">Remove selected corner</button>
+        </div>
+        <details class="disclosure">
+          <summary>More outline options</summary>
+          <button class="btn" id="resetShape" type="button">Reset room design</button>
+        </details>
+        <details class="disclosure editor-list-disclosure">
+          <summary>Corners</summary>
+          <div id="cornerList" class="editor-list" aria-label="Room corners"></div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-room-doors">
+        <h2 id="h-room-doors">Doors</h2>
+        <details class="disclosure">
+          <summary>Door placement help</summary>
+          <p class="hint">Choose <strong>Add door</strong>, then click a wall. Select a door to change its width, hinge, or swing.</p>
+        </details>
+        <label for="doorWidth">Door width (cm)</label>
+        <input type="number" id="doorWidth" min="60" max="140" step="5" value="90">
+        <div class="btns">
+          <button class="btn" id="addDoor" type="button">Add door</button>
+          <button class="btn danger" id="removeDoor" type="button" disabled>Remove selected door</button>
+        </div>
+        <details class="disclosure">
+          <summary>Door options</summary>
+          <div class="btns">
+            <button class="btn" id="flipHinge" type="button" disabled>Flip hinge side</button>
+            <button class="btn" id="flipSwing" type="button" disabled>Flip swing direction</button>
+          </div>
+        </details>
+        <details class="disclosure editor-list-disclosure">
+          <summary>Placed doors</summary>
+          <div id="doorList" class="editor-list" aria-label="Room doors"></div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-room-windows">
+        <h2 id="h-room-windows">Windows</h2>
+        <details class="disclosure">
+          <summary>Window placement help</summary>
+          <p class="hint">Set the size and sill height, choose <strong>Add window</strong>, then click a wall.</p>
+        </details>
+        <div class="row two">
+          <div><label for="windowWidth">Width (cm)</label><input type="number" id="windowWidth" min="60" max="240" step="10" value="120"></div>
+          <div><label for="windowSill">Sill height (cm)</label><input type="number" id="windowSill" min="0" max="250" step="5" value="90"></div>
+          <div><label for="windowHeight">Glass height (cm)</label><input type="number" id="windowHeight" min="40" max="240" step="5" value="110"></div>
+        </div>
+        <div class="btns">
+          <button class="btn" id="addWindow" type="button">Add window</button>
+          <button class="btn danger" id="removeWindow" type="button" disabled>Remove selected window</button>
+        </div>
+        <details class="disclosure editor-list-disclosure">
+          <summary>Placed windows</summary>
+          <div id="windowList" class="editor-list" aria-label="Room windows"></div>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-editor-help">
+        <details class="disclosure">
+          <summary><h2 id="h-editor-help">Editing tips</h2></summary>
+          <p class="hint">Corners are joined in order. Keep the outline closed and non-crossing. Doors and windows stay attached to their wall when you reshape the room.</p>
+        </details>
+        <p class="hint" id="editorStatus" role="status" aria-live="polite">Drag a corner, add a corner, or add a door to begin.</p>
+      </section>
+    </div>
+
+    <div class="stage-col">
+      <section class="panel" aria-labelledby="h-room-measurements">
+        <h2 id="h-room-measurements">Room measurements</h2>
+        <p class="hint">Enter the actual room size and ceiling height so Room For Improvement can scale the drawing.</p>
+        <div class="row">
+          <div><label for="roomWidth">Width (cm)</label><input type="number" id="roomWidth" min="200" max="1200" step="10" value="420"></div>
+          <div><label for="roomLength">Length (cm)</label><input type="number" id="roomLength" min="200" max="1200" step="10" value="360"></div>
+          <div><label for="roomHeight">Ceiling height (cm)</label><input type="number" id="roomHeight" min="200" max="400" step="5" value="250"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-room-editor">
+        <h2 id="h-room-editor">Room editor</h2>
+        <p class="hint">Drag corners or use the controls to add openings.</p>
+        <div class="canvas-box floorplan-editor">
+          <svg id="roomEditor" viewBox="0 0 800 520" role="application" aria-label="Interactive room outline editor">
+            <defs>
+              <pattern id="editorGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M 24 0 L 0 0 0 24" fill="none" class="editor-grid-line"></path>
+              </pattern>
+            </defs>
+            <rect x="0" y="0" width="800" height="520" class="editor-grid"></rect>
+            <g id="roomDrawing"></g>
+          </svg>
+        </div>
+        <button class="btn primary" id="applyRoom" type="button">Use this room in Room For Improvement</button>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="room-config-storage.js"></script>
+<script src="floorplan.js"></script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Room For Improvement</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+
+<div class="wrap">
+  <nav class="page-tabs" aria-label="Room For Improvement pages">
+    <a class="page-tab" href="Roomfit.html" aria-current="page">Arrange furniture</a>
+    <a class="page-tab" id="editRoomLink" href="floorplan.html">Design room</a>
+  </nav>
+
+  <header>
+    <h1>Room For Improvement</h1>
+    <p>Add your room and furniture to see how everything fits.</p>
+  </header>
+
+  <div class="app">
+    <div class="rail">
+      <section class="panel" aria-labelledby="h-room">
+        <h2 id="h-room"><span class="step">1</span>Room</h2>
+        <div class="row">
+          <div><label for="rw">Width (cm)</label><input type="number" id="rw" min="200" max="1200" step="10" value="420"></div>
+          <div><label for="rl">Length (cm)</label><input type="number" id="rl" min="200" max="1200" step="10" value="360"></div>
+          <div><label for="rh">Height (cm)</label><input type="number" id="rh" min="200" max="400" step="5" value="250"></div>
+        </div>
+        <details class="disclosure">
+          <summary>Appearance</summary>
+          <div class="row two room-options">
+            <div>
+              <label for="wallColor">Wall colour</label>
+              <input type="color" id="wallColor" value="#2B3A35">
+            </div>
+            <label class="toggle" for="transparentWalls">
+              <input type="checkbox" id="transparentWalls" checked>
+              <span>Transparent walls (3D)</span>
+            </label>
+          </div>
+          <div>
+            <label for="floorTexture">Floor texture</label>
+            <select id="floorTexture">
+              <option value="wood">Wood</option>
+              <option value="carpet">Carpet</option>
+              <option value="marble">Marble</option>
+            </select>
+          </div>
+        </details>
+        <p class="hint" id="roomSummary"></p>
+        <p class="hint" id="roomStorageStatus" role="status" aria-live="polite" hidden></p>
+      </section>
+
+      <section class="panel" aria-labelledby="h-links">
+        <h2 id="h-links"><span class="step">2</span>Furniture links</h2>
+        <div>
+          <label for="links">One link per line</label>
+          <textarea id="links" placeholder="https://www.ikea.com/gb/en/p/brimnes-wardrobe-with-3-doors-white-40407922/" spellcheck="false"></textarea>
+        </div>
+        <button class="btn primary" id="extractBtn" type="button">Extract details</button>
+        <ul class="log" id="log" aria-live="polite"></ul>
+        <details class="disclosure">
+          <summary>About extraction</summary>
+          <p class="hint">Room For Improvement reads product specifications when available. Missing details are estimated and can be edited.</p>
+        </details>
+      </section>
+
+      <section class="panel" aria-labelledby="h-items">
+        <h2 id="h-items"><span class="step">3</span>Your pieces</h2>
+        <ul class="items" id="itemList"></ul>
+        <p class="empty" id="itemEmpty" hidden>No pieces yet. Paste a link above and extract it.</p>
+        <details class="disclosure">
+          <summary>Add a generated model</summary>
+          <p class="hint">Add a 3D model you generated before, without a product link.</p>
+          <label for="libraryModelSelect">Generated model</label>
+          <select id="libraryModelSelect"><option value="">Loading generated models…</option></select>
+          <button class="btn" id="addLibraryModel" type="button" disabled>Add to room</button>
+          <p class="hint" id="libraryStatus" role="status" aria-live="polite"></p>
+        </details>
+      </section>
+
+      <details class="panel panel-disclosure" aria-labelledby="h-design-files">
+        <summary><h2 id="h-design-files">Design files</h2></summary>
+        <p class="hint">Save or load a JSON design containing the room and furniture arrangement.</p>
+        <label for="designName">Design name</label>
+        <input type="text" id="designName" maxlength="80" value="Room For Improvement design">
+        <div class="btns">
+          <button class="btn" id="saveDesign" type="button">Save design</button>
+          <button class="btn" id="loadDesign" type="button">Load design</button>
+          <input id="designFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p class="hint" id="designStatus" role="status" aria-live="polite"></p>
+      </details>
+    </div>
+
+    <div class="stage-col">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tab-plan" aria-selected="true" type="button">Floor plan</button>
+        <button class="tab" role="tab" id="tab-3d" aria-selected="false" type="button">3D view</button>
+        <span class="spacer"></span>
+        <label class="snap"><input type="checkbox" id="snap" checked> Snap to 5 cm</label>
+        <button class="btn small" id="resetBtn" type="button">Reset room</button>
+      </div>
+
+      <div class="canvas-box" id="planBox"><canvas id="plan" tabindex="0" aria-label="Floor plan. Drag furniture to move it. Arrow keys nudge, R rotates, Delete removes."></canvas></div>
+      <div class="canvas-box" id="threeBox" hidden><div id="three"></div></div>
+      <p class="hint" id="stageHint">Drag a piece to move it; select it to edit.</p>
+      <details class="disclosure">
+        <summary>Controls</summary>
+        <p class="hint">Floor plan: arrow keys nudge a selected piece, Page Up / Page Down (or + / −) raise and lower it, R rotates it, and Delete removes it. In 3D, drag to orbit and scroll to zoom.</p>
+      </details>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Floor area</div><div class="v" id="stArea">0 <small>m²</small></div></div>
+        <div class="stat"><div class="k">Floor covered</div><div class="v" id="stCover">0 <small>%</small></div></div>
+        <div class="stat"><div class="k">Total cost</div><div class="v" id="stCost">£0</div></div>
+        <div class="stat"><div class="k">Problems</div><div class="v" id="stIssues">0</div></div>
+      </div>
+      <ul class="issues" id="issues"></ul>
+
+      <section class="panel" id="editor" aria-labelledby="h-edit" hidden>
+        <h2 id="h-edit">Selected piece</h2>
+        <p class="empty" id="edEmpty">Select a piece on the plan or in the list to edit it.</p>
+        <div id="edBody" hidden style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label for="ed-name">Name</label>
+            <input type="text" id="ed-name">
+          </div>
+          <div class="row">
+            <div><label for="ed-w">Width (cm)</label><input type="number" id="ed-w" min="10" max="500"></div>
+            <div><label for="ed-d">Depth (cm)</label><input type="number" id="ed-d" min="10" max="500"></div>
+            <div><label for="ed-h">Height (cm)</label><input type="number" id="ed-h" min="1" max="300"></div>
+          </div>
+          <div>
+            <label for="ed-elev">Height above floor (cm)</label>
+            <input type="number" id="ed-elev" min="0" max="400" step="5">
+          </div>
+          <div>
+            <label for="ed-color">Colour</label>
+            <input type="color" id="ed-color">
+          </div>
+          <section class="ai-model-section" aria-labelledby="h-ai-model">
+            <h3 id="h-ai-model">AI 3D model</h3>
+            <p class="hint">Generate a model from this item's product image and use it in the orbitable 3D room.</p>
+            <button class="btn primary" id="generateModelButton" type="button" disabled>Generate 3D model</button>
+            <p class="hint ai-model-status" id="aiModelStatus" role="status" aria-live="polite"></p>
+            <a class="btn" id="downloadModelLink" download hidden>Download GLB</a>
+            <div id="savedModelControls" hidden>
+              <label for="savedModelSelect">Previously generated model</label>
+              <select id="savedModelSelect">
+                <option value="">Select a saved GLB…</option>
+              </select>
+              <button class="btn" id="useSavedModelButton" type="button" disabled>Insert saved model</button>
+            </div>
+          </section>
+          <details class="disclosure">
+            <summary>More options</summary>
+            <div class="row two">
+              <div><label for="ed-mat">Material</label><input type="text" id="ed-mat"></div>
+              <div><label for="ed-price">Price (£)</label><input type="number" id="ed-price" min="0" max="20000"></div>
+            </div>
+            <div class="row two">
+              <div><label for="ed-shape">Shape</label>
+                <select id="ed-shape"><option value="rect">Rectangle</option><option value="round">Round</option><option value="L">L-shape</option></select></div>
+              <div><label for="ed-rot">Rotation <span class="mono" id="rotVal"></span></label><input type="range" id="ed-rot" min="0" max="359" step="1"></div>
+            </div>
+            <div class="btns">
+              <button class="btn small" id="rotL" type="button">Rotate −90°</button>
+              <button class="btn small" id="rotR" type="button">Rotate +90°</button>
+            </div>
+            <div class="badges" id="badges"></div>
+            <div class="src" id="edSrc"></div>
+          </details>
+          <div class="btns">
+            <button class="btn small danger" id="delBtn" type="button">Remove piece</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="product-extractor.js"></script>
+<script src="room-config-storage.js"></script>
+<script src="roomfit.js"></script>
+
+</body></html>

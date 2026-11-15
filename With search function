@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Furniture Room Planner</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f5f5f5;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.welcome-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #eef5f8, #f8f5ef);
+}
+
+.welcome-card {
+    width: min(560px, 100%);
+    padding: 40px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+.welcome-card h1 {
+    margin: 8px 0 12px;
+    font-size: clamp(30px, 5vw, 42px);
+}
+
+.welcome-card p {
+    color: #555;
+    line-height: 1.5;
+}
+
+.eyebrow {
+    color: #0078d7 !important;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.room-fields,
+.room-controls {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.room-fields {
+    margin: 24px 0;
+}
+
+.room-fields label,
+.room-controls label {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.room-fields input,
+.room-controls input {
+    min-width: 90px;
+    padding: 9px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    font: inherit;
+}
+
+.room-controls label {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+}
+
+.primary-button,
+.secondary-button,
+.room-controls button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.primary-button {
+    color: #fff;
+    background: #0078d7;
+    font-weight: 700;
+}
+
+.secondary-button {
+    color: #333;
+    background: #e8e8e8;
+    margin-right: 8px;
+}
+
+#setupStatus {
+    min-height: 1.2em;
+}
+
+#planner {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.room-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 12px;
+    background: #e8e8e8;
+}
+
+#roomSizeReadout {
+    margin-left: auto;
+    color: #555;
+    font-size: 14px;
+}
+
+.scale-hint {
+    color: #555;
+    font-size: 13px;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-radius: 0;
+    background: #333;
+}
+
+.toolbar input[type="text"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 8px;
+}
+
+.toolbar button {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+.toolbar button:disabled {
+    cursor: wait;
+}
+
+#workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 24px;
+    background: #f5f5f5;
+}
+
+#status {
+    color: #fff;
+    align-self: center;
+}
+
+#canvas {
+    flex: none;
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(#e0e0e0 1px, transparent 1px),
+      linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+    background-size: var(--grid-size, 25px) var(--grid-size, 25px);
+    border: 2px solid #999;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.furniture {
+    position: absolute;
+    cursor: move;
+    user-select: none;
+}
+
+.furniture img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.furniture.selected {
+    outline: 2px solid #0078d7;
+}
+
+.resize-handle {
+    width: 12px;
+    height: 12px;
+    background: #0078d7;
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    cursor: nwse-resize;
+}
+
+@media (max-width: 600px) {
+    .welcome-card {
+        padding: 28px 22px;
+    }
+
+    .room-controls label {
+        flex: 1;
+    }
+
+    #roomSizeReadout {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+</style>
+</head>
+<body>
+
+<section id="welcomeScreen" class="welcome-screen">
+    <div class="welcome-card">
+        <p class="eyebrow">Furniture Room Planner</p>
+        <h1>Make room for your ideas.</h1>
+        <p>Set up your room, add furniture images, and arrange everything to scale.</p>
+        <button class="primary-button" type="button" onclick="showRoomSetup()">Get Started</button>
+    </div>
+</section>
+
+<section id="roomSetupScreen" class="welcome-screen" hidden>
+    <div class="welcome-card">
+        <p class="eyebrow">Room setup</p>
+        <h1>How big is your room?</h1>
+        <p>Enter the room width and height in metres. You can change these later.</p>
+        <form onsubmit="startPlanner(event)">
+            <div class="room-fields">
+                <label for="setupRoomWidth">Width (m)
+                    <input id="setupRoomWidth" type="number" min="1" max="30" step="0.1" value="4" required>
+                </label>
+                <label for="setupRoomHeight">Height (m)
+                    <input id="setupRoomHeight" type="number" min="1" max="30" step="0.1" value="5" required>
+                </label>
+            </div>
+            <p id="setupStatus" role="status" aria-live="polite"></p>
+            <button class="secondary-button" type="button" onclick="showWelcome()">Back</button>
+            <button class="primary-button" type="submit">Start Planning</button>
+        </form>
+    </div>
+</section>
+
+<main id="planner" hidden>
+    <div class="room-toolbar">
+        <strong>Room size</strong>
+        <div class="room-controls">
+            <label for="roomWidthInput">Width (m)
+                <input id="roomWidthInput" type="number" min="1" max="30" step="0.1" value="4">
+            </label>
+            <label for="roomHeightInput">Height (m)
+                <input id="roomHeightInput" type="number" min="1" max="30" step="0.1" value="5">
+            </label>
+            <button type="button" onclick="updateRoomSize()">Update Room</button>
+        </div>
+        <span class="scale-hint">IKEA items use product dimensions; other images start up to 0.8 m wide.</span>
+        <span id="roomSizeReadout"></span>
+    </div>
+    <div class="toolbar">
+        <input
+            type="text"
+            id="imageUrl"
+            placeholder="Paste an image URL or IKEA product link">
+        <button id="addFurnitureButton" onclick="addFurniture()">Add Furniture</button>
+        <button onclick="deleteSelected()">Delete Selected</button>
+        <span id="status" role="status" aria-live="polite"></span>
+    </div>
+    <div id="workspace">
+        <div id="canvas"></div>
+    </div>
+</main>
+
+<script>
+const canvas = document.getElementById("canvas");
+const workspace = document.getElementById("workspace");
+const status = document.getElementById("status");
+const addButton = document.getElementById("addFurnitureButton");
+const planner = document.getElementById("planner");
+const setupRoomWidth = document.getElementById("setupRoomWidth");
+const setupRoomHeight = document.getElementById("setupRoomHeight");
+const roomWidthInput = document.getElementById("roomWidthInput");
+const roomHeightInput = document.getElementById("roomHeightInput");
+const roomSizeReadout = document.getElementById("roomSizeReadout");
+let selectedItem = null;
+let runtimePromise = null;
+let sessionPromise = null;
+let roomWidth = 4;
+let roomHeight = 5;
+let pixelsPerMeter = 1;
+
+function showRoomSetup() {
+    document.getElementById("welcomeScreen").hidden = true;
+    document.getElementById("roomSetupScreen").hidden = false;
+}
+
+function showWelcome() {
+    document.getElementById("roomSetupScreen").hidden = true;
+    document.getElementById("welcomeScreen").hidden = false;
+}
+
+function readRoomDimensions(widthInput, heightInput) {
+    const width = Number(widthInput.value);
+    const height = Number(heightInput.value);
+    if (!Number.isFinite(width) || !Number.isFinite(height) ||
+        width < 1 || width > 30 || height < 1 || height > 30) {
+        return null;
+    }
+    return { width, height };
+}
+
+function startPlanner(event) {
+    event.preventDefault();
+    const dimensions = readRoomDimensions(setupRoomWidth, setupRoomHeight);
+    if (!dimensions) {
+        document.getElementById("setupStatus").textContent =
+            "Enter a width and height between 1 and 30 metres.";
+        return;
+    }
+
+    roomWidth = dimensions.width;
+    roomHeight = dimensions.height;
+    roomWidthInput.value = roomWidth;
+    roomHeightInput.value = roomHeight;
+    document.getElementById("roomSetupScreen").hidden = true;
+    planner.hidden = false;
+    updateRoomLayout();
+}
+
+function updateRoomSize() {
+    const dimensions = readRoomDimensions(roomWidthInput, roomHeightInput);
+    if (!dimensions) {
+        status.textContent = "Enter a width and height between 1 and 30 metres.";
+        return;
+    }
+
+    roomWidth = dimensions.width;
+    roomHeight = dimensions.height;
+    updateRoomLayout();
+    status.textContent = `Room updated to ${roomWidth} m × ${roomHeight} m.`;
+}
+
+function updateRoomLayout() {
+    if (planner.hidden || workspace.clientWidth === 0 || workspace.clientHeight === 0) {
+        return;
+    }
+
+    const availableWidth = Math.max(100, workspace.clientWidth - 48);
+    const availableHeight = Math.max(100, workspace.clientHeight - 48);
+    pixelsPerMeter = Math.min(availableWidth / roomWidth, availableHeight / roomHeight);
+    canvas.style.width = `${roomWidth * pixelsPerMeter}px`;
+    canvas.style.height = `${roomHeight * pixelsPerMeter}px`;
+    canvas.style.setProperty("--grid-size", `${Math.max(12, pixelsPerMeter * 0.5)}px`);
+    roomSizeReadout.textContent = `${roomWidth} m × ${roomHeight} m`;
+
+    for (const item of canvas.querySelectorAll(".furniture")) {
+        const image = item.querySelector("img");
+        const widthMeters = Number(item.dataset.widthMeters);
+        const heightMeters = Number(item.dataset.heightMeters);
+        const fitScale = Math.min(1, roomWidth / widthMeters, roomHeight / heightMeters);
+        const displayWidth = widthMeters * fitScale;
+        const displayHeight = heightMeters * fitScale;
+        const xMeters = Math.max(
+            0,
+            Math.min(Number(item.dataset.xMeters), roomWidth - displayWidth)
+        );
+        const yMeters = Math.max(
+            0,
+            Math.min(Number(item.dataset.yMeters), roomHeight - displayHeight)
+        );
+        item.style.width = `${displayWidth * pixelsPerMeter}px`;
+        item.style.height = `${displayHeight * pixelsPerMeter}px`;
+        item.style.left = `${xMeters * pixelsPerMeter}px`;
+        item.style.top = `${yMeters * pixelsPerMeter}px`;
+    }
+}
+
+window.addEventListener("resize", updateRoomLayout);
+
+function parseMeasurementMeters(value) {
+    const match = /^([\d\s,./]+)\s*(mm|cm|m|inches|inch|in|["″])$/i.exec(
+        String(value || "").trim()
+    );
+    if (!match) return null;
+
+    const fraction = /^(\d+(?:[.,]\d+)?)\s+(\d+)\/(\d+)$/.exec(match[1].trim());
+    const amount = fraction
+        ? Number(fraction[1].replace(",", ".")) + Number(fraction[2]) / Number(fraction[3])
+        : Number(match[1].replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    const unit = match[2].toLowerCase();
+    const multiplier = unit === "mm" ? 0.001
+        : unit === "cm" ? 0.01
+        : unit === "m" ? 1
+        : 0.0254;
+    return amount * multiplier;
+}
+
+function getIkeaProductDimensions(documentPage) {
+    for (const script of documentPage.querySelectorAll('script[type="application/ld+json"]')) {
+        let data;
+        try {
+            data = JSON.parse(script.textContent);
+        } catch {
+            continue;
+        }
+
+        const products = Array.isArray(data) ? data : data["@graph"] || [data];
+        const product = products.find(entry =>
+            entry["@type"] === "Product" ||
+            (Array.isArray(entry["@type"]) && entry["@type"].includes("Product"))
+        );
+        if (!product) continue;
+
+        const widthMeters = parseMeasurementMeters(product.width);
+        const heightMeters = parseMeasurementMeters(product.height);
+        if (widthMeters && heightMeters) {
+            return { widthMeters, heightMeters };
+        }
+    }
+    return null;
+}
+
+async function getImageUrl(url) {
+    const isIkeaPage =
+        (url.hostname === "ikea.com" || url.hostname.endsWith(".ikea.com")) &&
+        !/\.(png|jpe?g|gif|webp|avif)$/i.test(url.pathname);
+
+    if (!isIkeaPage) {
+        return { url: url.href, widthMeters: null, heightMeters: null };
+    }
+
+    const response = await fetch(url.href);
+    if (!response.ok) {
+        throw new Error(`Could not retrieve the IKEA product page (HTTP ${response.status}).`);
+    }
+
+    const page = await response.text();
+    const documentPage = new DOMParser().parseFromString(page, "text/html");
+    const slug = url.pathname
+        .split("/")
+        .filter(Boolean)
+        .pop()
+        .replace(/-\d+$/, "")
+        .toLowerCase();
+    const allCandidates = new Map();
+    for (const imageElement of documentPage.querySelectorAll('img[src*="/images/products/"]')) {
+        const sourceSet = (imageElement.getAttribute("srcset") || "")
+            .split(",")
+            .map(entry => {
+                const [source, descriptor] = entry.trim().split(/\s+/);
+                const width = /^(\d+(?:\.\d+)?)w$/.exec(descriptor || "");
+                const density = /^(\d+(?:\.\d+)?)x$/.exec(descriptor || "");
+                return {
+                    source,
+                    resolution: width ? Number(width[1]) : density ? Number(density[1]) : 0
+                };
+            })
+            .filter(candidate => candidate.source);
+        const bestSource = sourceSet.reduce(
+            (best, candidate) => candidate.resolution > best.resolution ? candidate : best,
+            { source: imageElement.getAttribute("src"), resolution: 0 }
+        );
+        const image = new URL(bestSource.source, url.href).href;
+        const key = new URL(image).pathname;
+        const candidate = {
+            description: imageElement.alt || "",
+            image,
+            resolution: bestSource.resolution
+        };
+        const previous = allCandidates.get(key);
+        if (!previous || candidate.resolution > previous.resolution) {
+            allCandidates.set(key, candidate);
+        }
+    }
+
+    const candidates = [...allCandidates.values()];
+    const productCandidates = candidates.filter(({ image }) =>
+        new URL(image).pathname.toLowerCase().includes(`/images/products/${slug}__`)
+    );
+    const images = productCandidates.length ? productCandidates : candidates;
+    const transparentImage = images.find(({ image }) => /\.png(?:[?#]|$)/i.test(image));
+    const imageScore = ({ description }) => {
+        const text = description.toLowerCase();
+        return [
+            ["plain background", 5],
+            ["white background", 5],
+            ["isolated", 4],
+            ["cutout", 4],
+            ["elegant", 3],
+            ["clear", 1],
+            ["with", 1]
+        ].reduce((total, [cue, weight]) => total + (text.includes(cue) ? weight : 0), 0) -
+        (/\b(room|bedroom|kitchen|office|table|surrounded|interior|lifestyle)\b|red wine stands/i.test(text) ? 10 : 0);
+    };
+    const cleanImage = images.reduce((best, candidate) =>
+        imageScore(candidate) > imageScore(best) ? candidate : best, images[0]);
+    const openGraphImage = documentPage.querySelector('meta[property="og:image"]')?.content;
+    const image = transparentImage || cleanImage ||
+        (openGraphImage ? { image: openGraphImage } : null);
+
+    if (!image) {
+        throw new Error("No product image was found on that IKEA page.");
+    }
+
+    const dimensions = getIkeaProductDimensions(documentPage);
+    return {
+        url: new URL(image.image, url.href).href,
+        widthMeters: dimensions?.widthMeters ?? null,
+        heightMeters: dimensions?.heightMeters ?? null
+    };
+}
+
+function loadOnnxRuntime() {
+    if (window.ort) {
+        return Promise.resolve(window.ort);
+    }
+    if (!runtimePromise) {
+        runtimePromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.min.js";
+            script.onload = () => {
+                if (window.ort) {
+                    resolve(window.ort);
+                } else {
+                    runtimePromise = null;
+                    reject(new Error("Could not start the background-removal runtime."));
+                }
+            };
+            script.onerror = () => {
+                runtimePromise = null;
+                reject(new Error("Could not download the background-removal runtime."));
+            };
+            document.head.appendChild(script);
+        });
+    }
+    return runtimePromise;
+}
+
+async function getBackgroundSession() {
+    const ort = await loadOnnxRuntime();
+    if (!sessionPromise) {
+        sessionPromise = ort.InferenceSession.create(
+            "https://huggingface.co/Ko033/isnet-general-use-onnx/resolve/5349b617911fd60c619b52f32e2b593517b78df3/onnx/model_quantized.onnx",
+            { executionProviders: ["wasm"] }
+        ).catch(error => {
+            sessionPromise = null;
+            throw error;
+        });
+    }
+    return { ort, session: await sessionPromise };
+}
+
+function loadImageForProcessing(url) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(
+            new Error("The image host does not allow browser background removal.")
+        );
+        image.src = url;
+    });
+}
+
+async function removeBackground(url) {
+    const image = await loadImageForProcessing(url);
+    status.textContent = "Loading background remover (about 46 MB on first use)...";
+
+    const { ort, session } = await getBackgroundSession();
+    status.textContent = "Removing the background on this device...";
+
+    const inputCanvas = document.createElement("canvas");
+    inputCanvas.width = 1024;
+    inputCanvas.height = 1024;
+    const inputContext = inputCanvas.getContext("2d", { willReadFrequently: true });
+    inputContext.fillStyle = "#fff";
+    inputContext.fillRect(0, 0, 1024, 1024);
+
+    const scale = Math.min(1024 / image.naturalWidth, 1024 / image.naturalHeight);
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    const left = (1024 - width) / 2;
+    const top = (1024 - height) / 2;
+    inputContext.drawImage(image, left, top, width, height);
+
+    const pixels = inputContext.getImageData(0, 0, 1024, 1024).data;
+    const planeSize = 1024 * 1024;
+    const input = new Float32Array(planeSize * 3);
+    for (let i = 0; i < planeSize; i++) {
+        input[i] = pixels[i * 4] / 255 - 0.5;
+        input[planeSize + i] = pixels[i * 4 + 1] / 255 - 0.5;
+        input[planeSize * 2 + i] = pixels[i * 4 + 2] / 255 - 0.5;
+    }
+
+    const result = await session.run({
+        input_image: new ort.Tensor("float32", input, [1, 3, 1024, 1024])
+    });
+    const mask = result.output_image.data;
+    let min = Infinity;
+    let max = -Infinity;
+    for (const value of mask) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+    }
+
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = 1024;
+    maskCanvas.height = 1024;
+    const maskContext = maskCanvas.getContext("2d");
+    const maskPixels = maskContext.createImageData(1024, 1024);
+    for (let i = 0; i < mask.length; i++) {
+        const alpha = Math.round(
+            Math.max(0, Math.min(1, (mask[i] - min) / (max - min || 1))) * 255
+        );
+        maskPixels.data[i * 4] = 255;
+        maskPixels.data[i * 4 + 1] = 255;
+        maskPixels.data[i * 4 + 2] = 255;
+        maskPixels.data[i * 4 + 3] = alpha;
+    }
+    maskContext.putImageData(maskPixels, 0, 0);
+
+    const outputCanvas = document.createElement("canvas");
+    outputCanvas.width = image.naturalWidth;
+    outputCanvas.height = image.naturalHeight;
+    const outputContext = outputCanvas.getContext("2d");
+    outputContext.drawImage(image, 0, 0);
+    outputContext.globalCompositeOperation = "destination-in";
+    outputContext.drawImage(
+        maskCanvas,
+        left, top, width, height,
+        0, 0, image.naturalWidth, image.naturalHeight
+    );
+
+    const outputPixels = outputContext.getImageData(
+        0, 0, outputCanvas.width, outputCanvas.height
+    ).data;
+    let minX = outputCanvas.width;
+    let minY = outputCanvas.height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < outputCanvas.height; y++) {
+        for (let x = 0; x < outputCanvas.width; x++) {
+            if (outputPixels[(y * outputCanvas.width + x) * 4 + 3] > 16) {
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+            }
+        }
+    }
+    if (maxX < minX || maxY < minY) {
+        throw new Error("The background remover could not find the product.");
+    }
+
+    const croppedCanvas = document.createElement("canvas");
+    croppedCanvas.width = maxX - minX + 1;
+    croppedCanvas.height = maxY - minY + 1;
+    croppedCanvas.getContext("2d").drawImage(
+        outputCanvas,
+        minX, minY, croppedCanvas.width, croppedCanvas.height,
+        0, 0, croppedCanvas.width, croppedCanvas.height
+    );
+
+    return new Promise((resolve, reject) => {
+        croppedCanvas.toBlob(blob => {
+            if (blob) {
+                resolve(blob);
+            } else {
+                reject(new Error("Could not create the background-free image."));
+            }
+        }, "image/png");
+    });
+}
+
+async function addFurniture() {
+    if (addButton.disabled) return;
+    addButton.disabled = true;
+    try {
+        const input = document.getElementById("imageUrl").value.trim();
+        if (!input) {
+            status.textContent = "Enter an image URL or IKEA product link.";
+            return;
+        }
+
+        let url;
+        try {
+            url = new URL(input);
+            if (url.protocol !== "http:" && url.protocol !== "https:") {
+                throw new Error();
+            }
+        } catch {
+            status.textContent = "Enter a valid http or https URL.";
+            return;
+        }
+
+        status.textContent = "Finding the product image...";
+        let productImage;
+        try {
+            productImage = await getImageUrl(url);
+        } catch (error) {
+            status.textContent = error.message || "Could not load the product image.";
+            return;
+        }
+
+        let processedImage;
+        try {
+            processedImage = await removeBackground(productImage.url);
+        } catch (error) {
+            status.textContent = error.message || "Could not remove the image background.";
+            return;
+        }
+        const processedBitmap = await createImageBitmap(processedImage);
+        const imageAspectRatio = processedBitmap.height / processedBitmap.width;
+        processedBitmap.close();
+        const hasProductDimensions =
+            Number.isFinite(productImage.widthMeters) &&
+            Number.isFinite(productImage.heightMeters);
+        const widthMeters = hasProductDimensions
+            ? productImage.widthMeters
+            : Math.min(0.8, roomWidth * 0.4, roomHeight * 0.4);
+        const heightMeters = hasProductDimensions
+            ? productImage.heightMeters
+            : widthMeters * imageAspectRatio;
+        const processedUrl = URL.createObjectURL(processedImage);
+
+        const itemCount = canvas.querySelectorAll(".furniture").length;
+        const xMeters = Math.min(
+            0.25 + (itemCount % 3) * (widthMeters + 0.15),
+            roomWidth - Math.min(widthMeters, roomWidth)
+        );
+        const yMeters = Math.min(
+            0.25 + Math.floor(itemCount / 3) * (heightMeters + 0.15),
+            roomHeight - Math.min(heightMeters, roomHeight)
+        );
+        const wrapper = document.createElement("div");
+        wrapper.className = "furniture";
+        wrapper.dataset.widthMeters = widthMeters;
+        wrapper.dataset.heightMeters = heightMeters;
+        wrapper.dataset.xMeters = xMeters;
+        wrapper.dataset.yMeters = yMeters;
+
+        const img = document.createElement("img");
+        img.draggable = false;
+        img.alt = "Furniture";
+        img.onload = updateRoomLayout;
+        img.onerror = () => {
+            URL.revokeObjectURL(processedUrl);
+            wrapper.remove();
+            status.textContent = "That image could not be loaded. Check the URL and try again.";
+        };
+        wrapper.dataset.processedUrl = processedUrl;
+
+        const resizeHandle = document.createElement("div");
+        resizeHandle.className = "resize-handle";
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(resizeHandle);
+        canvas.appendChild(wrapper);
+
+        updateRoomLayout();
+        img.src = processedUrl;
+        enableDragging(wrapper);
+        enableResizing(wrapper, resizeHandle);
+        status.textContent = hasProductDimensions
+            ? `Background removed; item sized to ${widthMeters.toFixed(2)} m × ${heightMeters.toFixed(2)} m.`
+            : "Background removed.";
+
+        wrapper.addEventListener("click", (e) => {
+            e.stopPropagation();
+
+            document.querySelectorAll(".furniture")
+                .forEach(el => el.classList.remove("selected"));
+
+            wrapper.classList.add("selected");
+            selectedItem = wrapper;
+        });
+    } catch (error) {
+        status.textContent = error.message || "Could not add the furniture image.";
+    } finally {
+        addButton.disabled = false;
+    }
+}
+
+canvas.addEventListener("click", () => {
+    document.querySelectorAll(".furniture")
+        .forEach(el => el.classList.remove("selected"));
+    selectedItem = null;
+});
+
+function deleteSelected() {
+    if (selectedItem) {
+        if (selectedItem.dataset.processedUrl) {
+            URL.revokeObjectURL(selectedItem.dataset.processedUrl);
+        }
+        selectedItem.remove();
+        selectedItem = null;
+    }
+}
+
+function enableDragging(element) {
+    let dragging = false;
+    let offsetX, offsetY;
+
+    element.addEventListener("mousedown", (e) => {
+        if (e.target.classList.contains("resize-handle")) return;
+
+        dragging = true;
+        const bounds = canvas.getBoundingClientRect();
+        offsetX = e.clientX - bounds.left - canvas.clientLeft - element.offsetLeft;
+        offsetY = e.clientY - bounds.top - canvas.clientTop - element.offsetTop;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+
+        const bounds = canvas.getBoundingClientRect();
+        const left = Math.max(
+            0,
+            Math.min(
+                canvas.clientWidth - element.offsetWidth,
+                e.clientX - bounds.left - canvas.clientLeft - offsetX
+            )
+        );
+        const top = Math.max(
+            0,
+            Math.min(
+                canvas.clientHeight - element.offsetHeight,
+                e.clientY - bounds.top - canvas.clientTop - offsetY
+            )
+        );
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+        element.dataset.xMeters = left / pixelsPerMeter;
+        element.dataset.yMeters = top / pixelsPerMeter;
+    });
+
+    document.addEventListener("mouseup", () => {
+        dragging = false;
+    });
+}
+
+function enableResizing(element, handle) {
+    let resizing = false;
+    let startWidth;
+    let startX;
+    let aspectRatio;
+
+    handle.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        resizing = true;
+        startWidth = element.offsetWidth;
+        startX = e.clientX;
+        aspectRatio =
+            Number(element.dataset.heightMeters) /
+            Number(element.dataset.widthMeters);
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!resizing) return;
+
+        const newWidth = startWidth + (e.clientX - startX);
+        const maxWidth = Math.min(
+            canvas.clientWidth - element.offsetLeft,
+            (canvas.clientHeight - element.offsetTop) / aspectRatio
+        );
+        const minWidth = Math.min(pixelsPerMeter * 0.1, maxWidth);
+
+        element.style.width = `${Math.max(minWidth, Math.min(maxWidth, newWidth))}px`;
+        element.dataset.widthMeters = element.offsetWidth / pixelsPerMeter;
+        element.dataset.heightMeters =
+            Number(element.dataset.widthMeters) * aspectRatio;
+        updateRoomLayout();
+    });
+
+    document.addEventListener("mouseup", () => {
+        resizing = false;
+    });
+}
+</script>
+
+</body>
+</html>
