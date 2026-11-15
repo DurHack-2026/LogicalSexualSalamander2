@@ -19,7 +19,7 @@ node server.js
 ```
 
 Open `http://10.247.153.150:3000`. The room starts empty; paste IKEA product URLs one per line and select **Extract details**. The server fetches IKEA product pages directly using standard HTTP requests and only follows redirects to IKEA domains. It does not attempt to bypass access restrictions; if IKEA returns an error such as HTTP 403, use a permitted access method or check the retailer's terms. 
-IF ASKS FOR USER + PASSWORD; USER = ANYTHING, PASSWORD = 'Durhack2026'
+\n IF ASKS FOR USER + PASSWORD; USER = ANYTHING, PASSWORD = 'Durhack2026'
 
 ## Use Room For Improvement from other devices
 
